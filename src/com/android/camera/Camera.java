@@ -1086,10 +1086,12 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         mPreferences = new ComboPreferences(this);
         CameraSettings.upgradeGlobalPreferences(mPreferences.getGlobal());
         mCameraId = CameraSettings.readPreferredCameraId(mPreferences);
+        Log.v(TAG, "getPreferredCameraId:" + mCameraId);
 
         // Testing purpose. Launch a specific camera through the intent extras.
         int intentCameraId = Util.getCameraFacingIntentExtras(this);
         if (intentCameraId != -1) {
+            Log.v(TAG, "we should not come here");
             mCameraId = intentCameraId;
         }
     }
@@ -1097,10 +1099,13 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     Thread mCameraOpenThread = new Thread(new Runnable() {
         public void run() {
             try {
+                Log.v(TAG, "openCameraThread" + mCameraId);
                 mCameraDevice = Util.openCamera(Camera.this, mCameraId);
             } catch (CameraHardwareException e) {
+                Log.v(TAG, "openCameraThread exception" + mCameraId);
                 mOpenCameraFail = true;
             } catch (CameraDisabledException e) {
+                Log.v(TAG, "openCameraThread exception disable" + mCameraId);
                 mCameraDisabled = true;
             }
         }
@@ -1174,6 +1179,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         } catch (InterruptedException ex) {
             // ignore
         }
+
+        Log.v(TAG, "starting Camera Preview thread");
         mCameraPreviewThread.start();
 
         if (mIsImageCaptureIntent) {
@@ -1191,6 +1198,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
         mBackCameraId = CameraHolder.instance().getBackCameraId();
         mFrontCameraId = CameraHolder.instance().getFrontCameraId();
+        Log.v(TAG, "HACK: mBackCameraId:" + mBackCameraId);
+        Log.v(TAG, "HACK: mFrontCameraId:" + mFrontCameraId);
 
         // Wait until the camera settings are retrieved.
         synchronized (mCameraPreviewThread) {
@@ -1252,13 +1261,15 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 CameraSettings.KEY_FLASH_MODE,
                 CameraSettings.KEY_WHITE_BALANCE,
                 CameraSettings.KEY_EXPOSURE,
+                CameraSettings.KEY_CAMERA_ID,
                 CameraSettings.KEY_SCENE_MODE};
         final String[] OTHER_SETTING_KEYS = {
                 CameraSettings.KEY_RECORD_LOCATION,
                 CameraSettings.KEY_PICTURE_SIZE,
+                CameraSettings.KEY_CAMERA_ID,
                 CameraSettings.KEY_FOCUS_MODE};
 
-        CameraPicker.setImageResourceId(R.drawable.ic_switch_photo_facing_holo_light);
+        //CameraPicker.setImageResourceId(R.drawable.ic_switch_photo_facing_holo_light);
         mIndicatorControlContainer.initialize(this, mPreferenceGroup,
                 mParameters.isZoomSupported(),
                 SETTING_KEYS, OTHER_SETTING_KEYS);
@@ -1345,6 +1356,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
     @OnClickAttr
     public void onThumbnailClicked(View v) {
+        Log.v(TAG, "onThumbnailClicked");
         if (isCameraIdle() && mThumbnail != null) {
             showSharePopup();
         }
@@ -1471,7 +1483,6 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             Log.i(TAG, "Not enough space or storage not ready. remaining=" + mPicturesRemaining);
             return;
         }
-
         Log.v(TAG, "onShutterButtonClick: mCameraState=" + mCameraState);
 
         // If the user wants to do a snapshot while the previous one is still
@@ -1691,18 +1702,22 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
+        Log.d(TAG, "onKeyDown: " + keyCode);
         switch (keyCode) {
             case KeyEvent.KEYCODE_FOCUS:
+                Log.d(TAG, "onKeyDown focus: " + keyCode);
                 if (mFirstTimeInitialized && event.getRepeatCount() == 0) {
                     onShutterButtonFocus(true);
                 }
                 return true;
             case KeyEvent.KEYCODE_CAMERA:
+                Log.d(TAG, "onKeyDown camera: " + keyCode);
                 if (mFirstTimeInitialized && event.getRepeatCount() == 0) {
                     onShutterButtonClick();
                 }
                 return true;
             case KeyEvent.KEYCODE_DPAD_CENTER:
+                Log.d(TAG, "onKeyDown dpad center: " + keyCode);
                 // If we get a dpad center event without any focused view, move
                 // the focus to the shutter button and press it.
                 if (mFirstTimeInitialized && event.getRepeatCount() == 0) {
@@ -1726,6 +1741,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
+                Log.d(TAG, "onKeyup camera: " + keyCode);
         switch (keyCode) {
             case KeyEvent.KEYCODE_FOCUS:
                 if (mFirstTimeInitialized) {
@@ -1918,6 +1934,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     }
 
     private void updateCameraParametersPreference() {
+                Log.d(TAG, "camera.java, updateCameraParameters: " );
         if (mAeLockSupported) {
             mParameters.setAutoExposureLock(mFocusManager.getAeAwbLock());
         }
@@ -1942,8 +1959,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             CameraSettings.initialCameraPictureSize(this, mParameters);
         } else {
             List<Size> supported = mParameters.getSupportedPictureSizes();
-            CameraSettings.setCameraPictureSize(
-                    pictureSize, supported, mParameters);
+            //CameraSettings.setCameraPictureSize(
+             //       pictureSize, supported, mParameters);
         }
 
         // Set the preview frame aspect ratio according to the picture size.
@@ -1951,7 +1968,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
         mPreviewPanel = findViewById(R.id.frame_layout);
         mPreviewFrameLayout = (PreviewFrameLayout) findViewById(R.id.frame);
-        mPreviewFrameLayout.setAspectRatio((double) size.width / size.height);
+        //mPreviewFrameLayout.setAspectRatio((double) size.width / size.height);
 
         // Set a preview size that is closest to the viewfinder height and has
         // the right aspect ratio.
@@ -2187,13 +2204,19 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private boolean switchToOtherMode(int mode) {
         if (isFinishing()) return false;
         if (mImageSaver != null) mImageSaver.waitDone();
-        MenuHelper.gotoMode(mode, Camera.this);
-        mHandler.removeMessages(FIRST_TIME_INIT);
+        //MenuHelper.gotoMode(mode, Camera.this);
+        //mHandler.removeMessages(FIRST_TIME_INIT);
         finish();
+        Log.v(TAG, "HACK: changed panoram to toggle button:");
+        CameraSettings.writePreferredCameraId(mPreferences,
+                ((mCameraId == mFrontCameraId)
+                 ? mBackCameraId : mFrontCameraId));
+        onSharedPreferenceChanged();
         return true;
     }
 
     public boolean onModeChanged(int mode) {
+        Log.d(TAG, "onModeChanged: " + mode);
         if (mode != ModePicker.MODE_CAMERA) {
             return switchToOtherMode(mode);
         } else {

@@ -95,7 +95,7 @@
                     android:layout_width="wrap_content"
                     android:scaleType="center"
                     android:background="@drawable/bg_pressed"
-                    android:src="@drawable/ic_switch_pan_holo_light" />
+                    android:src="@drawable/ic_switch_photo_facing_holo_light" />
         </LinearLayout>
         <View android:layout_height="match_parent"
                 android:layout_width="1dp"

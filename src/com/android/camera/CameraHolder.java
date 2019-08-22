@@ -176,14 +176,15 @@ public class CameraHolder {
 
     private synchronized void releaseCamera() {
         Assert(mUsers == 0);
-        Assert(mCameraDevice != null);
+        //Assert(mCameraDevice != null);
         long now = System.currentTimeMillis();
         if (now < mKeepBeforeTime) {
             mHandler.sendEmptyMessageDelayed(RELEASE_CAMERA,
                     mKeepBeforeTime - now);
             return;
         }
-        mCameraDevice.release();
+        if (mCameraDevice != null)
+            mCameraDevice.release();
         mCameraDevice = null;
         // We must set this to null because it has a reference to Camera.
         // Camera has references to the listeners.
